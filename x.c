@@ -1854,6 +1854,7 @@ xsixeldeleteimage(SixelContext *ctx, ImageList *im)
 		XFreePixmap(xw.dpy, (Drawable)im->pixmap);
 	free(im->pixels);
 	free(im);
+	printf("deleted sixel!!\n");
 }
 
 void
@@ -1861,10 +1862,10 @@ xsixelscrolldown(SixelContext *ctx, int n, int bottom)
 {
 	ImageList *im;
 	for (im = ctx->images; im; im = im->next) {
-		if (im->y < bottom)
-			im->y += n;
-		if (im->y > bottom)
-			im->should_delete = 1;
+		// if (im->y < bottom)
+			im->y -= n;
+		/* if (im->y > bottom) */
+		/* 	im->should_delete = 1; */
 	}
 }
 
@@ -1873,10 +1874,10 @@ xsixelscrollup(SixelContext *ctx, int n, int top)
 {
 	ImageList *im;
 	for (im = ctx->images; im; im = im->next) {
-		if (im->y+im->height/win.ch > top)
-			im->y -= n;
-		if (im->y+im->height/win.ch < top)
-			im->should_delete = 1;
+		// if (im->y+im->height/win.ch > top)
+			im->y += n;
+		/* if (im->y+im->height/win.ch < top) */
+		/* 	im->should_delete = 1; */
 	}
 }
 
@@ -1984,16 +1985,16 @@ xdrawsixel(SixelContext *ctx, Line *line, int row, int col)
 				}
 			}
 		}
-		if (n == 0) {
-			tmp = im;
-			im = im->next;
-			xsixeldeleteimage(ctx, tmp);
-			continue;
-		}
+		/* if (n == 0) { */
+		/* 	tmp = im; */
+		/* 	im = im->next; */
+		/* 	xsixeldeleteimage(ctx, tmp); */
+		/* 	continue; */
+		/* } */
 		gc = XCreateGC(xw.dpy, xw.win, 0, &gcvalues);
 		if (n > 1)
 			XSetClipRectangles(xw.dpy, gc, 0, 0, rects, n, YXSorted);
-		XCopyArea(xw.dpy, (Drawable)im->pixmap, xw.buf, gc, 0, 0, im->width, im->height, borderpx + im->x * win.cw, borderpx + im->y * win.ch);
+		XCopyArea(xw.dpy, (Drawable)im->pixmap, xw.buf, gc, 0, 0, im->width, im->height, win.hborderpx + im->x * win.cw, win.vborderpx + im->y * win.ch);
 		XFreeGC(xw.dpy, gc);
 		im = im->next;
 	}

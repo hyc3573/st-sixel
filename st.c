@@ -1201,7 +1201,7 @@ tscrollup(int orig, int n, int copyhist)
 	}
 
 	/* process scrollup */
-	xsixelscrollup(&term.sixel, n, term.top);
+	xsixelscrollup(&term.sixel, -n, term.top);
 
 	selscroll(orig, -n);
 }
@@ -2821,10 +2821,11 @@ draw(void)
 
 	drawregion(0, 0, term.col, term.row);
 	if (term.scr == 0) {
-		xdrawsixel(&term.sixel, term.line, term.row, term.col);
+		/* xdrawsixel(&term.sixel, term.line, term.row, term.col); */
 		xdrawcursor(cx, term.c.y, term.line[term.c.y][cx],
 				term.ocx, term.ocy, term.line[term.ocy][term.ocx]);
 	}
+	xdrawsixel(&term.sixel, term.line, term.row, term.col);
 	term.ocx = cx;
 	term.ocy = term.c.y;
 	xfinishdraw();
