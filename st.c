@@ -196,6 +196,7 @@ static void tnewline(int);
 static void tputtab(int);
 static void tputc(Rune);
 static void treset(void);
+int tisaltscr(void);
 static void tscrollup(int, int, int);
 static void tscrolldown(int, int, int);
 static void tsetattr(int *, int);
@@ -1088,6 +1089,11 @@ tnew(int col, int row)
 	treset();
 }
 
+int tisaltscr(void)
+{
+	return IS_SET(MODE_ALTSCREEN);
+}
+
 void
 tswapscreen(void)
 {
@@ -1355,6 +1361,15 @@ tclearregion(int x1, int y1, int x2, int y2)
 			gp->bg = term.c.attr.bg;
 			gp->mode = 0;
 			gp->u = ' ';
+		}
+	}
+
+	// tclearregion(0, 0, term.col-1, term.row-1);
+	if (x1 == 0 && y1 == 0 && x2 == term.col-1 && y2 == term.row-1)
+	{
+		for (ImageList *im = term.sixel.images; im; im=im->next)
+		{
+			im->should_delete = 1;
 		}
 	}
 }

@@ -24,6 +24,7 @@
 #include <cairo/cairo-ft.h>
 #include <cairo/cairo-xlib.h>
 
+int tisaltscr(void);
 char *argv0;
 #include "arg.h"
 #include "sixel.h"
@@ -45,6 +46,7 @@ typedef struct {
 	void (*func)(const Arg *);
 	const Arg arg;
 	uint  release;
+	int altscrn;
 } MouseShortcut;
 
 typedef struct {
@@ -504,6 +506,7 @@ mouseaction(XEvent *e, uint release)
 	for (ms = mshortcuts; ms < mshortcuts + LEN(mshortcuts); ms++) {
 		if (ms->release == release &&
 		    ms->button == e->xbutton.button &&
+			(!ms->altscrn || (ms->altscrn == (tisaltscr() ? 1 : -1))) &&
 		    (match(ms->mod, state) ||  /* exact or forced */
 		     match(ms->mod, state & ~forcemousemod))) {
 			ms->func(&(ms->arg));
@@ -841,36 +844,40 @@ xloadcolor(int i, const char *name, Color *ncolor)
 	return XAllocNamedColor(xw.dpy, xw.cmap, name, &screen, ncolor);
 }
 
-void
-xloadcols(void)
+void xloadcols(void)
 {
 	int i;
 	static int loaded;
 	Color *cp;
 
-	if (loaded) {
+	if (loaded)
+	{
 		for (cp = dc.col; cp < &dc.col[dc.collen]; ++cp)
 			XFreeColors(xw.dpy, xw.cmap, &cp->pixel, 1, 0);
-	} else {
+	}
+	else
+	{
 		dc.collen = MAX(LEN(colorname), 256);
 		dc.col = xmalloc(dc.collen * sizeof(Color));
 	}
 
-	printf("dc.collen = %d\n", dc.collen);
 	for (i = 0; i < dc.collen; i++)
-		//if (i == 15 || i == 258)
-		//printf("colorname #%d = %s\n", i, colorname[i]);
-		if (!xloadcolor(i, NULL, &dc.col[i])) {
+		// if (i == 15 || i == 258)
+		// printf("colorname #%d = %s\n", i, colorname[i]);
+	{
+		if (!xloadcolor(i, NULL, &dc.col[i]))
+		{
 			if (colorname[i])
 				die("could not allocate color '%s', #%d\n", colorname[i], i);
-			else
-				die("could not allocate color %d\n", i);
-		}
-	loaded = 1;
+            else
+                die("could not allocate color %d\n", i);
+        }
+	}
+	
+    loaded = 1;
 }
 
-int
-xsetcolorname(int x, const char *name)
+int xsetcolorname(int x, const char *name)
 {
 	Color ncolor;
 
@@ -1802,7 +1809,7 @@ xsettitle(char *p)
 int
 xsixelinit(SixelContext *ctx)
 {
-	return sixel_parser_init(&ctx->state, 0, dc.col[defaultbg].pixel, 1, win.cw, win.ch);
+	return sixel_parser_init(&ctx->state, 0, sixelbg/* dc.col[defaultbg].pixel */, 1, win.cw, win.ch);
 }
 
 int
@@ -2366,7 +2373,6 @@ resourceload(XrmDatabase db, char *name, enum resource_type rtype, void *const d
 
 	switch (rtype) {
 	case STRING:
-		printf("overwriting %s to %s\n", *sdst, ret.addr);
 		*sdst = ret.addr;
 		break;
 	case INTEGER:
